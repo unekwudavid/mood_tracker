@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -19,26 +20,51 @@ class MoodTrackerPage extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFFEEF2FF),
-              const Color(0xFFF5F3FF),
-              Colors.white,
-              const Color(0xFFEFF6FF),
+              const Color(0xFF4338CA), // Solid Indigo 700
+              const Color(0xFF312E81), // Solid Indigo 800
+              const Color(0xFF1E1B4B), // Solid Indigo 900
             ],
-            stops: const [0.0, 0.3, 0.7, 1.0],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 40),
-              _buildHeader(context),
-              const Spacer(),
-              _buildMoodSelector(context),
-              const Spacer(),
-              _buildTimelineSection(context),
-              const SizedBox(height: 40),
-            ],
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight:
+                    MediaQuery.of(context).size.height -
+                    MediaQuery.of(context).padding.top -
+                    MediaQuery.of(context).padding.bottom,
+              ),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        'MOOD TRACKER',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                          color: Colors.white.withOpacity(0.4),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildHeader(context),
+                    const Spacer(),
+                    _buildMoodSelector(context),
+                    const Spacer(),
+                    _buildTimelineSection(context),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -59,9 +85,9 @@ class MoodTrackerPage extends StatelessWidget {
           Text(
             'Track your daily emotional journey',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF6366F1).withOpacity(0.7),
-                  fontWeight: FontWeight.w500,
-                ),
+              color: Colors.white.withOpacity(0.6),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -78,19 +104,22 @@ class MoodTrackerPage extends StatelessWidget {
             type: MoodType.sad,
             label: 'Sad',
             color: Colors.indigo.shade400,
-            onTap: () => context.read<MoodBloc>().add(const AddMood(MoodType.sad)),
+            onTap: () =>
+                context.read<MoodBloc>().add(const AddMood(MoodType.sad)),
           ),
           _MoodButton(
             type: MoodType.neutral,
             label: 'Neutral',
             color: Colors.amber.shade400,
-            onTap: () => context.read<MoodBloc>().add(const AddMood(MoodType.neutral)),
+            onTap: () =>
+                context.read<MoodBloc>().add(const AddMood(MoodType.neutral)),
           ),
           _MoodButton(
             type: MoodType.happy,
             label: 'Happy',
             color: Colors.teal.shade400,
-            onTap: () => context.read<MoodBloc>().add(const AddMood(MoodType.happy)),
+            onTap: () =>
+                context.read<MoodBloc>().add(const AddMood(MoodType.happy)),
           ),
         ],
       ),
@@ -171,7 +200,8 @@ class _MoodButton extends StatefulWidget {
   State<_MoodButton> createState() => _MoodButtonState();
 }
 
-class _MoodButtonState extends State<_MoodButton> with SingleTickerProviderStateMixin {
+class _MoodButtonState extends State<_MoodButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -182,9 +212,10 @@ class _MoodButtonState extends State<_MoodButton> with SingleTickerProviderState
       vsync: this,
       duration: const Duration(milliseconds: 150),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.9,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -209,8 +240,12 @@ class _MoodButtonState extends State<_MoodButton> with SingleTickerProviderState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: widget.color.withOpacity(0.12),
@@ -245,23 +280,22 @@ class TimelineEntryItem extends StatefulWidget {
   State<TimelineEntryItem> createState() => _TimelineEntryItemState();
 }
 
-class _TimelineEntryItemState extends State<TimelineEntryItem> with SingleTickerProviderStateMixin {
+class _TimelineEntryItemState extends State<TimelineEntryItem>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _shakeAnimation;
+  // Happy: jump + spin (uses value 0.0 → 1.0 → 0.0)
+  // Neutral: side-to-side shake (uses sin-based oscillation)
+  // Sad: slow sink then drag back (uses value 0.0 → 1.0 → 0.0)
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.1), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 0.1, end: -0.1), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -0.1, end: 0.1), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 0.1, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    final duration = switch (widget.entry.type) {
+      MoodType.happy => const Duration(milliseconds: 600),
+      MoodType.neutral => const Duration(milliseconds: 500),
+      MoodType.sad => const Duration(milliseconds: 900),
+    };
+    _controller = AnimationController(vsync: this, duration: duration);
   }
 
   @override
@@ -270,8 +304,11 @@ class _TimelineEntryItemState extends State<TimelineEntryItem> with SingleTicker
     super.dispose();
   }
 
-  void _onTap() {
-    _controller.forward(from: 0);
+  void _onTap() async {
+    _controller.value = 0.0;
+    await _controller.forward();
+    await _controller.reverse();
+    _controller.value = 0.0;
   }
 
   @override
@@ -280,68 +317,109 @@ class _TimelineEntryItemState extends State<TimelineEntryItem> with SingleTicker
     final dateStr = DateFormat('MMM d').format(widget.entry.timestamp);
     final timeStr = DateFormat('jm').format(widget.entry.timestamp);
 
-    return AnimatedBuilder(
-      animation: _shakeAnimation,
-      builder: (context, child) {
-        return Transform.rotate(
-          angle: _shakeAnimation.value,
-          child: child,
-        );
-      },
-      child: GestureDetector(
-        onTap: _onTap,
-        child: Container(
-          width: 120,
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-            border: Border.all(
-              color: color.withOpacity(0.2),
-              width: 1.5,
+    final cardContent = Container(
+      width: 120,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            dateStr,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                dateStr,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 8),
-              MoodFace(type: widget.entry.type, size: 40, color: color),
-              const SizedBox(height: 8),
-              Text(
-                timeStr,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                width: 20,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          MoodFace(type: widget.entry.type, size: 40, color: color),
+          const SizedBox(height: 8),
+          Text(
+            timeStr,
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
           ),
-        ),
+          const SizedBox(height: 4),
+          Container(
+            width: 20,
+            height: 4,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return GestureDetector(
+      onTap: _onTap,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          switch (widget.entry.type) {
+            // ✨ HAPPY: Jumps UP and does a celebratory spin
+            case MoodType.happy:
+              final jumpValue = Curves.easeOutCubic.transform(
+                (_controller.value <= 0.5)
+                    ? _controller.value * 2
+                    : (1 - _controller.value) * 2,
+              );
+              final spinValue = _controller.value * 2 * 3.14159;
+              return Transform.translate(
+                offset: Offset(0, -60 * jumpValue), // jump 60px upward
+                child: Transform.rotate(
+                  angle: spinValue * 0.2, // gentle spin
+                  child: Transform.scale(
+                    scale: 1.0 + 0.2 * jumpValue, // grows while jumping
+                    child: child,
+                  ),
+                ),
+              );
+
+            // 😐 NEUTRAL: Wobbles side to side (left-right shake)
+            case MoodType.neutral:
+              final shakeValue = math.sin(_controller.value * math.pi * 4);
+              return Transform.translate(
+                offset: Offset(shakeValue * 12, 0), // 12px side shake
+                child: Transform.rotate(
+                  angle: shakeValue * 0.08, // slight tilt while shaking
+                  child: child,
+                ),
+              );
+
+            // 😔 SAD: Slowly droops down then sluggishly returns
+            case MoodType.sad:
+              final sinkValue = Curves.easeIn.transform(
+                (_controller.value <= 0.6)
+                    ? _controller.value / 0.6
+                    : (1 - _controller.value) / 0.4,
+              );
+              return Transform.translate(
+                offset: Offset(0, 30 * sinkValue), // sink 30px downward
+                child: Transform.scale(
+                  scale: 1.0 - 0.15 * sinkValue, // shrinks as it sinks
+                  child: Opacity(
+                    opacity: 1.0 - 0.3 * sinkValue, // fades slightly
+                    child: child,
+                  ),
+                ),
+              );
+          }
+        },
+        child: cardContent,
       ),
     );
   }

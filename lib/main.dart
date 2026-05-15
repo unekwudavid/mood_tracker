@@ -17,9 +17,9 @@ class MoodTrackerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6366F1), // Modern Indigo
-          brightness: Brightness.light,
-          surface: Colors.white,
+          seedColor: const Color(0xFF6366F1),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF1E1B4B),
         ),
         useMaterial3: true,
         textTheme: const TextTheme(
@@ -27,17 +27,17 @@ class MoodTrackerApp extends StatelessWidget {
             fontSize: 32,
             fontWeight: FontWeight.w800,
             letterSpacing: -1.0,
-            color: Color(0xFF1E1B4B),
+            color: Colors.white,
           ),
           titleLarge: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
-            color: Color(0xFF1E1B4B),
+            color: Colors.white,
           ),
           bodyMedium: TextStyle(
             fontSize: 16,
-            color: Color(0xFF4338CA),
+            color: Colors.white70,
           ),
         ),
       ),
