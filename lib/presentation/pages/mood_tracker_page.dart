@@ -19,10 +19,12 @@ class MoodTrackerPage extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.indigo.shade50,
+              const Color(0xFFEEF2FF),
+              const Color(0xFFF5F3FF),
               Colors.white,
-              Colors.blue.shade50,
+              const Color(0xFFEFF6FF),
             ],
+            stops: const [0.0, 0.3, 0.7, 1.0],
           ),
         ),
         child: SafeArea(
@@ -30,11 +32,11 @@ class MoodTrackerPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-              _buildHeader(),
+              _buildHeader(context),
               const Spacer(),
               _buildMoodSelector(context),
               const Spacer(),
-              _buildTimelineSection(),
+              _buildTimelineSection(context),
               const SizedBox(height: 40),
             ],
           ),
@@ -43,7 +45,7 @@ class MoodTrackerPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -51,20 +53,15 @@ class MoodTrackerPage extends StatelessWidget {
         children: [
           Text(
             'How are you feeling?',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.indigo.shade900,
-              letterSpacing: -0.5,
-            ),
+            style: Theme.of(context).textTheme.displayLarge,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             'Track your daily emotional journey',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.indigo.shade400,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF6366F1).withOpacity(0.7),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ],
       ),
@@ -100,7 +97,7 @@ class MoodTrackerPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTimelineSection() {
+  Widget _buildTimelineSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -111,11 +108,7 @@ class MoodTrackerPage extends StatelessWidget {
             children: [
               Text(
                 'Recent Moods',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.indigo.shade900,
-                ),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               BlocBuilder<MoodBloc, MoodState>(
                 builder: (context, state) {
@@ -220,9 +213,9 @@ class _MoodButtonState extends State<_MoodButton> with SingleTickerProviderState
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: widget.color.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    color: widget.color.withOpacity(0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
@@ -306,14 +299,14 @@ class _TimelineEntryItemState extends State<TimelineEntryItem> with SingleTicker
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: color.withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
             border: Border.all(
-              color: color.withOpacity(0.1),
-              width: 2,
+              color: color.withOpacity(0.2),
+              width: 1.5,
             ),
           ),
           child: Column(
